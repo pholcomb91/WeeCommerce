@@ -32,30 +32,9 @@ router.get('/:id', async (req, res) => {
   });
 
 // create new product
-router.post('/', async (req, res) => {
-  try {
-    const newCategory = await Product.create({
-      product_name: req.body.product_name,
-      price: req.body.price,
-      stock: req.body.stock,
-      tag_id: req.body.tagIds,  //???????????????????????
-    });
-    res.json(newCategory)
-  } catch (err) {
-    res.status(500).json(err)
-  }
-  
-  /* req.body should look like this...
-    {
-      product_name: "Basketball",
-      price: 200.00,
-      stock: 3,
-      tagIds: [1, 2, 3, 4]
-    }
-  -----------------------------------------------------------*/
+router.post('/', (req, res) => {
   Product.create(req.body)
     .then((product) => {
-      // if there's product tags, we need to create pairings to bulk create in the ProductTag model
       if (req.body.tagIds.length) {
         const productTagIdArr = req.body.tagIds.map((tag_id) => {
           return {
@@ -65,7 +44,6 @@ router.post('/', async (req, res) => {
         });
         return ProductTag.bulkCreate(productTagIdArr);
       }
-      // if no product tags, just respond
       res.status(200).json(product);
     })
     .then((productTagIds) => res.status(200).json(productTagIds))
@@ -83,7 +61,6 @@ router.put('/:id', (req, res) => {
     },
   })
     .then((product) => {
-      // find all associated tags from ProductTag
       return ProductTag.findAll({ where: { product_id: req.params.id } });
     })
     .then((productTags) => {
@@ -111,11 +88,9 @@ router.put('/:id', (req, res) => {
     })
     .then((updatedProductTags) => res.json(updatedProductTags))
     .catch((err) => {
-      // console.log(err);
       res.status(400).json(err);
     });
 });
-//-------------------------------------------------------------------
 router.delete('/:id', (req, res) => {
   Product.destroy({
       where: {
@@ -123,12 +98,10 @@ router.delete('/:id', (req, res) => {
       }
     }).then((products) => {
       console.log(products)
+      res.json(products)
     }).catch((err) => {
       res.status(400).json(err)
     });
-    // if (!prodDelete) {
-    //   res.status(404).json({message: "No product with that ID"})
-    // }
 });
 
 module.exports = router;
